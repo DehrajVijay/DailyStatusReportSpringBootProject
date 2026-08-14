@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Status Report</title>
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: "Segoe UI", Calibri, Arial, sans-serif;
+            margin: 0;
+            background: #f3f6f9;
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: 1.75rem;
+        }
+
+        .subtitle {
+            margin: 0 0 20px;
+            color: #4b5563;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .alert-success {
+            background: #ecfdf5;
+            border: 1px solid #6ee7b7;
+            color: #065f46;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        button {
+            border: none;
+            border-radius: 6px;
+            padding: 10px 16px;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: #1f4e78;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #163a5c;
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #111827;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+
+        .btn-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            background: #fff;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 980px;
+        }
+
+        th {
+            background: #1f4e78;
+            color: #fff;
+            text-align: left;
+            padding: 12px 10px;
+            font-size: 0.9rem;
+        }
+
+        td {
+            padding: 8px;
+            border-top: 1px solid #e5e7eb;
+            vertical-align: top;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font: inherit;
+        }
+
+        textarea {
+            min-height: 64px;
+            resize: vertical;
+        }
+
+        .col-narrow { width: 90px; }
+        .col-date { width: 130px; }
+        .col-actions { width: 90px; text-align: center; }
+
+        .meta {
+            margin-top: 16px;
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+
+        .meta code {
+            background: #eef2f7;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Daily Status Report</h1>
+    <p class="subtitle">Fill in your tasks, then click Generate to create the Excel file and open an Outlook draft.</p>
+
+    <div th:if="${successMessage}" class="alert alert-success">
+        <div th:text="${successMessage}">Success</div>
+        <div th:if="${excelPath}">Excel file: <strong th:text="${excelPath}"></strong></div>
+    </div>
+
+    <div th:if="${errorMessage}" class="alert alert-error" th:text="${errorMessage}">Error</div>
+
+    <form th:object="${form}" action="/generate" method="post" id="reportForm">
+        <div class="toolbar">
+            <button type="button" class="btn-secondary" id="addRowBtn">Add Row</button>
+            <button type="submit" class="btn-primary">Generate</button>
+        </div>
+
+        <div class="table-wrap">
+            <table id="taskTable">
+                <thead>
+                <tr>
+                    <th>Task Name</th>
+                    <th class="col-narrow">Completion %</th>
+                    <th class="col-narrow">Est. Hours</th>
+                    <th class="col-narrow">Spent Hours</th>
+                    <th>Remarks</th>
+                    <th class="col-date">Completion Date</th>
+                    <th class="col-actions">Remove</th>
+                </tr>
+                </thead>
+                <tbody id="taskBody">
+                <tr th:each="task, stat : *{tasks}" class="task-row">
+                    <td>
+                        <textarea th:field="*{tasks[__${stat.index}__].taskName}" rows="2"></textarea>
+                    </td>
+                    <td>
+                        <input type="number" min="0" max="100" step="1"
+                               th:field="*{tasks[__${stat.index}__].completionPercent}">
+                    </td>
+                    <td>
+                        <input type="number" min="0" step="0.25"
+                               th:field="*{tasks[__${stat.index}__].estimatedHours}">
+                    </td>
+                    <td>
+                        <input type="number" min="0" step="0.25"
+                               th:field="*{tasks[__${stat.index}__].hoursSpent}">
+                    </td>
+                    <td>
+                        <input type="text" th:field="*{tasks[__${stat.index}__].remarks}">
+                    </td>
+                    <td>
+                        <input type="text" placeholder="MM/DD/YYYY"
+                               th:field="*{tasks[__${stat.index}__].completionDate}">
+                    </td>
+                    <td class="col-actions">
+                        <button type="button" class="btn-danger remove-row-btn">X</button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </form>
+
+    <div class="meta">
+        Excel output folder: <code th:text="${outputDir}"></code><br>
+        Outlook config: <code th:text="${outlookConfigPath}"></code>
+    </div>
+</div>
+
+<template id="rowTemplate">
+    <tr class="task-row">
+        <td><textarea name="tasks[INDEX].taskName" rows="2"></textarea></td>
+        <td><input type="number" name="tasks[INDEX].completionPercent" min="0" max="100" step="1" value="0"></td>
+        <td><input type="number" name="tasks[INDEX].estimatedHours" min="0" step="0.5" value="0"></td>
+        <td><input type="number" name="tasks[INDEX].hoursSpent" min="0" step="0.5" value="0"></td>
+        <td><input type="text" name="tasks[INDEX].remarks" value="In Progress"></td>
+        <td><input type="text" name="tasks[INDEX].completionDate" placeholder="MM/DD/YYYY"></td>
+        <td class="col-actions"><button type="button" class="btn-danger remove-row-btn">X</button></td>
+    </tr>
+</template>
+
+<script>
+    const FIXED_TASKS = ["SOD: Performance Review", "Break"];
+
+    function todayFormatted() {
+        const now = new Date();
+        const month = String(now.getMonth() + 1).padStart(2, "0");
+        const day = String(now.getDate()).padStart(2, "0");
+        const year = now.getFullYear();
+        return `${month}/${day}/${year}`;
+    }
+
+    function reindexRows() {
+        const rows = document.querySelectorAll("#taskBody .task-row");
+        rows.forEach((row, index) => {
+            row.querySelectorAll("[name^='tasks']").forEach(input => {
+                input.name = input.name.replace(/tasks\[\d+]/, `tasks[${index}]`);
+            });
+        });
+    }
+
+    function bindRemoveButtons() {
+        document.querySelectorAll(".remove-row-btn").forEach(button => {
+            button.onclick = () => {
+                const row = button.closest("tr");
+                const taskName = row.querySelector("textarea, input")?.value?.trim() || "";
+                if (FIXED_TASKS.includes(taskName)) {
+                    alert("This is a fixed task and cannot be removed.");
+                    return;
+                }
+                row.remove();
+                reindexRows();
+            };
+        });
+    }
+
+    document.getElementById("addRowBtn").addEventListener("click", () => {
+        const template = document.getElementById("rowTemplate");
+        const clone = template.content.cloneNode(true);
+        const tbody = document.getElementById("taskBody");
+        const breakRow = [...tbody.querySelectorAll(".task-row")]
+            .find(row => row.querySelector("textarea")?.value?.trim() === "Break");
+
+        const html = clone.firstElementChild.outerHTML.replace(/INDEX/g, tbody.children.length);
+        const temp = document.createElement("tbody");
+        temp.innerHTML = html;
+        const newRow = temp.firstElementChild;
+        newRow.querySelector("[name$='completionDate']").value = todayFormatted();
+
+        if (breakRow) {
+            tbody.insertBefore(newRow, breakRow);
+        } else {
+            tbody.appendChild(newRow);
+        }
+
+        reindexRows();
+        bindRemoveButtons();
+    });
+
+    bindRemoveButtons();
+</script>
+</body>
+</html>
