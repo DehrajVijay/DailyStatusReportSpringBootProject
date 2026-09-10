@@ -25,7 +25,13 @@ bin/
 !**/src/test/**/bin/
 
 ### VS Code ###
-
+.vscode/
 
 ### Mac OS ###
 .DS_Store
+
+### Application logs ###
+logs/
+*.log
+*.log.*
+*.tmp

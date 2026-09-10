@@ -11,10 +11,13 @@ import java.net.URI;
 /**
  * Opens the default browser automatically when the app finishes starting.
  *
- * <p>Listens for {@link ApplicationReadyEvent} — fired after Tomcat is up and
- * all beans are ready. Reads port from {@code server.port} in application.properties.
+ * <p>
+ * Listens for {@link ApplicationReadyEvent} — fired after Tomcat is up and
+ * all beans are ready. Reads port from {@code server.port} in
+ * application.properties.
  *
- * <p>Disable with {@code app.browser.auto-open=false} in application.properties
+ * <p>
+ * Disable with {@code app.browser.auto-open=false} in application.properties
  * or when running tests.
  */
 @Component

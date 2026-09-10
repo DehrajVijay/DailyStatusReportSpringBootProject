@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Status Report - Architecture Diagrams</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: "Segoe UI", Calibri, Arial, sans-serif;
+            margin: 0;
+            background: #f3f6f9;
+            color: #1f2937;
+            line-height: 1.5;
+        }
+        header {
+            background: #1f4e78;
+            color: #fff;
+            padding: 24px 32px;
+        }
+        header h1 { margin: 0 0 8px; font-size: 1.6rem; }
+        header p { margin: 0; opacity: 0.9; max-width: 720px; }
+        main { max-width: 1200px; margin: 0 auto; padding: 24px; }
+        .card {
+            background: #fff;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .card h2 {
+            margin: 0 0 8px;
+            font-size: 1.2rem;
+            color: #1f4e78;
+        }
+        .card p { margin: 0 0 16px; color: #4b5563; font-size: 0.95rem; }
+        .diagram {
+            overflow-x: auto;
+            background: #fafbfc;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+        }
+        .mermaid { text-align: center; }
+        .tip {
+            background: #eff6ff;
+            border: 1px solid #93c5fd;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 24px;
+            font-size: 0.9rem;
+        }
+        code { background: #eef2f7; padding: 2px 6px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Daily Status Report Web - Architecture Diagrams</h1>
+    <p>Colorful diagrams for the complete app. Open this file in Chrome or Edge if Cursor markdown preview shows blank boxes.</p>
+</header>
+
+<main>
+    <div class="tip">
+        <strong>Why this file exists:</strong> Cursor's built-in markdown preview does not render Mermaid code blocks.
+        This page loads Mermaid in your browser and always shows the diagrams. Bookmark this file or keep it open while reading <code>PROJECT-GUIDE.md</code>.
+    </div>
+
+    <div class="card">
+        <h2>1. Application startup</h2>
+        <p>What happens from running the JAR to the browser opening.</p>
+        <div class="diagram">
+            <pre class="mermaid">
+flowchart TD
+    A["You run the JAR file"] --> B["main in DailyStatusReportWebApplication"]
+    B --> C["SpringApplication.run"]
+    C --> D["Read application.properties"]
+    D --> E["Scan package com.statusreport"]
+    E --> F["Create beans and inject dependencies"]
+    F --> G["Start Tomcat on port 8081"]
+    G --> H["ApplicationStartedEvent"]
+    H --> I["StartupLogger logs started"]
+    I --> J["ApplicationReadyEvent"]
+    J --> K["StartupLogger logs ready"]
+    J --> L["BrowserLauncher opens localhost"]
+    L --> M["You see the form"]
+    style A fill:#dbeafe,stroke:#1e40af
+    style M fill:#dcfce7,stroke:#15803d
+            </pre>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>2. Generate report - full sequence</h2>
+        <p>POST /generate: validate, write Excel, open Outlook draft.</p>
+        <div class="diagram">
+            <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor U as You
+    participant B as Browser
+    participant C as ReportController
+    participant S as ReportService
+    participant P as TaskParser
+    participant E as ExcelWriter
+    participant O as OutlookService
+    participant PS as PowerShell
+    participant X as Outlook
+    U->>B: Click Generate
+    B->>C: POST /generate
+    C->>S: generate tasks
+    Note over S,P: Step 1 validate
+    S->>P: parse
+    P-->>S: clean tasks
+    Note over S,E: Step 2 Excel
+    S->>E: write xlsx
+    E-->>S: file saved
+    Note over S,X: Step 3 Outlook
+    S->>O: openDraft
+    O->>PS: run script
+    PS->>X: COM Display draft
+    X-->>U: Draft opens
+    S-->>C: ReportResult
+    C-->>B: success page
+            </pre>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>3. System context</h2>
+        <p>What the app talks to on your PC and on the network.</p>
+        <div class="diagram">
+            <pre class="mermaid">
+flowchart TB
+    U["You"]
+    BR["Web browser"]
+    T["Tomcat port 8081"]
+    SB["Spring Boot app"]
+    FS["Documents folder"]
+    PS["PowerShell"]
+    OL["Outlook desktop"]
+    MS["Mail server"]
+    U -->|fill form| BR
+    BR -->|HTTP| T
+    T --- SB
+    SB -->|xlsx and html| FS
+    SB -->|launch| PS
+    PS -->|COM| OL
+    U -->|click Send| OL
+    OL -->|email| MS
+    style U fill:#dbeafe,stroke:#1e40af
+    style SB fill:#f0fdf4,stroke:#15803d
+    style OL fill:#fee2e2,stroke:#b91c1c
+            </pre>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>4. Layered architecture</h2>
+        <p>Six layers from the web page down to the OS.</p>
+        <div class="diagram">
+            <pre class="mermaid">
+flowchart TD
+    subgraph L1["Presentation"]
+        HTML["index.html"]
+    end
+    subgraph L2["Web"]
+        CTRL["ReportController"]
+    end
+    subgraph L3["Model"]
+        FORM["ReportForm"]
+        TASK["TaskEntry"]
+    end
+    subgraph L4["Business"]
+        SVC["ReportService"]
+        PARSE["TaskParser"]
+        DEF["DefaultTaskRows"]
+    end
+    subgraph L5["Output"]
+        XL["ExcelWriter"]
+        OUT["OutlookDraftService"]
+        HB["HtmlBuilder"]
+    end
+    subgraph L6["Infrastructure"]
+        OC["OutlookConfig"]
+        RS["ReportStyleConfig"]
+        PSS["PowerShell script"]
+    end
+    HTML <--> CTRL
+    CTRL --> FORM
+    FORM --> TASK
+    CTRL --> SVC
+    CTRL --> DEF
+    SVC --> PARSE
+    SVC --> XL
+    SVC --> OUT
+    OUT --> HB
+    XL --> RS
+    HB --> RS
+    HB --> OC
+    OUT --> OC
+    OUT --> PSS
+    style L1 fill:#eff6ff,stroke:#2563eb
+    style L4 fill:#f0fdf4,stroke:#16a34a
+    style L5 fill:#fefce8,stroke:#ca8a04
+            </pre>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>5. Spring bean wiring</h2>
+        <p>Green = Spring singletons. Amber = not beans. Purple = per-request data.</p>
+        <div class="diagram">
+            <pre class="mermaid">
+flowchart TD
+    subgraph spring["Spring beans"]
+        CTRL["ReportController"]
+        SVC["ReportService"]
+        PARSE["TaskParser"]
+        XL["ExcelWriter"]
+        OUT["OutlookDraftService"]
+    end
+    subgraph manual["Not beans"]
+        RS["ReportStyleConfig"]
+        OC["OutlookConfig"]
+        HB["HtmlBuilder"]
+    end
+    subgraph perreq["Per request"]
+        FORM["ReportForm"]
+        TASK["TaskEntry"]
+    end
+    CTRL --> SVC
+    SVC --> PARSE
+    SVC --> XL
+    SVC --> OUT
+    XL -.-> RS
+    OUT -.-> RS
+    OUT -.-> OC
+    OUT -.-> HB
+    CTRL -.-> FORM
+    FORM -.-> TASK
+    style spring fill:#f0fdf4,stroke:#15803d
+    style manual fill:#fef3c7,stroke:#b45309
+    style perreq fill:#faf5ff,stroke:#7e22ce
+            </pre>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>6. Class relationships</h2>
+        <p>Main types and how they connect.</p>
+        <div class="diagram">
+            <pre class="mermaid">
+classDiagram
+    class ReportController
+    class ReportService
+    class TaskParser
+    class ReportForm
+    class TaskEntry
+    class StatusReportExcelWriter
+    class OutlookDraftService
+    class StatusReportHtmlBuilder
+    ReportController --> ReportService
+    ReportController ..> ReportForm
+    ReportService --> TaskParser
+    ReportService --> StatusReportExcelWriter
+    ReportService --> OutlookDraftService
+    ReportForm *-- TaskEntry
+    OutlookDraftService ..> StatusReportHtmlBuilder
+            </pre>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>7. Data transformation</h2>
+        <p>One task row becomes Excel cells and email HTML.</p>
+        <div class="diagram">
+            <pre class="mermaid">
+flowchart TD
+    A["Browser input"] --> B["HTTP form fields"]
+    B --> C["TaskEntry via binder"]
+    C --> D["Validated by TaskParser"]
+    D --> E["Remaining hours computed"]
+    E --> F["Excel file"]
+    E --> G["Email HTML"]
+    F --> H["DailyStatus.xlsx"]
+    G --> I["Outlook draft"]
+    style A fill:#dbeafe,stroke:#1e40af
+    style H fill:#fef3c7,stroke:#b45309
+    style I fill:#fee2e2,stroke:#b91c1c
+            </pre>
+        </div>
+    </div>
+</main>
+
+<script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'default',
+        securityLevel: 'loose',
+        flowchart: { useMaxWidth: true, htmlLabels: true }
+    });
+</script>
+</body>
+</html>
