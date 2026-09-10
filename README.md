@@ -47,7 +47,7 @@ For full architecture diagrams, class-by-class walkthrough, and interview prep, 
 
 - Java 17
 - Windows with **desktop Outlook** installed
-- `mail.to`,`mail.cc`,`mail.subject.prefix`,`mail.greeting`,`mail.signature` configured in `Documents\DailyStatusReports\outlook-config.properties`
+- `mail.to` configured in `Documents\DailyStatusReports\outlook-config.properties`
 
 ## How to run
 
